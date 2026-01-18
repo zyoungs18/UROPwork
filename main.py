@@ -6,7 +6,6 @@ from graph_visualization import *
 from itertools import combinations_with_replacement
 output_dir = os.path.dirname(os.path.abspath(__file__))  # PATH string this file is contained in
 
-# * graph creation tools *#
 
 # how to merge two graphs:
 '''
@@ -37,17 +36,15 @@ G_merged = nx.compose_all([G1, G2, G3])
 '''
 
 
-# custom functions to build graphs more intuitively
-def inspect(G):
-    nodes = list(G.nodes)
-    edges = list(G.edges)
+def inspect(graph):
+    nodes = list(graph.nodes)
+    edges = list(graph.edges)
 
-    Ginfo = {
+    graph_info = {
         "Nodes": nodes,
         "Edges": edges
     }
-
-    return Ginfo
+    return graph_info
 
 
 def build(vertices, edges):
@@ -55,119 +52,107 @@ def build(vertices, edges):
     Create a graph using NetworkX from a list of vertices and edges.
     build([u,v,w,...], [(u, v), (w, v), ...])
     """
-    G = nx.Graph()
-    G.add_nodes_from(vertices)
-    G.add_edges_from(edges)
-    return G
+    graph = nx.Graph()
+    graph.add_nodes_from(vertices)
+    graph.add_edges_from(edges)
+    return graph
 
 
 def merge(*graphs):
-    """
-    Merge multiple NetworkX graphs into a single graph.
-    """
-    G = nx.Graph()
+    new_graph = nx.Graph()
 
     for graph in graphs:
-        G.add_nodes_from(graph.nodes())
-        G.add_edges_from(graph.edges())
-
-    return G
-
-
-def path(c):
-    C = list(c)
-    G = nx.Graph()
-    G.add_nodes_from(C)
-    for i in range(len(C) - 1):
-        G.add_edge(C[i], C[i + 1])
-    return G
+        new_graph.add_nodes_from(graph.nodes())
+        new_graph.add_edges_from(graph.edges())
+    return new_graph
 
 
-def cycle(c):
-    C = list(c)
-    G = nx.Graph()
-    G.add_nodes_from(C)
-    for i in range(len(C)):
-        G.add_edge(C[i], C[(i + 1) % len(C)])
-    return G
+def path(path_graph):
+    graph_nodes = list(path_graph)
+    graph = nx.Graph()
+    graph.add_nodes_from(graph_nodes)
+    for i in range(len(graph_nodes) - 1):
+        graph.add_edge(graph_nodes[i], graph_nodes[i + 1])
+    return graph
+
+
+def cycle(cycle_graph):
+    graph_nodes = list(cycle_graph)
+    graph = nx.Graph()
+    graph.add_nodes_from(graph_nodes)
+    for i in range(len(graph_nodes)):
+        graph.add_edge(graph_nodes[i], graph_nodes[(i + 1) % len(graph_nodes)])
+    return graph
 
 
 def star(hub, neighbors):
     leaves = list(neighbors)
-    G = nx.Graph()
-    G.add_node(hub)
+    graph = nx.Graph()
+    graph.add_node(hub)
     for node in leaves:
-        G.add_node(node)
-        G.add_edge(hub, node)
-    return G
+        graph.add_node(node)
+        graph.add_edge(hub, node)
+    return graph
 
 
-def K(n):
-    G = nx.Graph()
-    G.add_nodes_from(range(0, n))
+def complete_k(n):
+    graph = nx.Graph()
+    graph.add_nodes_from(range(0, n))
     for node in range(0, n):
         for neighbor in range(0, n):
             if node != neighbor:
-                G.add_edge(node, neighbor)
-    return G
+                graph.add_edge(node, neighbor)
+    return graph
+
+
+def is_isomorphic_to_any(graph, graph_list):
+    for g in graph_list:
+        if nx.is_isomorphic(graph, g):
+            return True
+    return False
 
 
 def trees(n):
-    def is_isomorphic_to_any(graph, graph_list):
-        for g in graph_list:
-            if nx.is_isomorphic(graph, g):
-                return True
-        return False
-
     all_trees = []
     nodes = list(range(n + 1))  # A tree with n edges has n+1 nodes
 
     for edges in combinations(combinations(nodes, 2), n):
-        G = nx.Graph()
-        G.add_edges_from(edges)
-        if nx.is_tree(G) and not is_isomorphic_to_any(G, all_trees):
-            all_trees.append(G)
-
+        new_graph = nx.Graph()
+        new_graph.add_edges_from(edges)
+        if nx.is_tree(new_graph) and not is_isomorphic_to_any(new_graph, all_trees):
+            all_trees.append(new_graph)
     return all_trees
 
 
-def cycle5():
-    return nx.cycle_graph(5)
+def is_tripartite(graph):
+    if nx.is_bipartite(graph):
+        return False
+    return nx.chromatic_polynomial(graph)(3) > 0
 
 
-def generate_tripartite_C5():
+def generate_tripartite_c5():
     base = nx.cycle_graph(5)
     graphs = []
 
     for u, v in combinations_with_replacement(base.nodes(), 2):
-        G = base.copy()
-        a = max(G.nodes()) + 1
+        graph = base.copy()
+        a = max(graph.nodes()) + 1
         b = a + 1
 
-        G.add_edge(u, a)
-        G.add_edge(v, b)
+        graph.add_edge(u, a)
+        graph.add_edge(v, b)
 
-        if not any(nx.is_isomorphic(G, H) for H in graphs):
-            graphs.append(G)
-
+        if not is_isomorphic_to_any(graph, graphs):
+            graphs.append(graph)
     return graphs
 
 
 '''-----------------------------------------------------------------------------------'''
 
-# Testing
-print(f'Here: {generate_tripartite_C5()}')
-c5 = generate_tripartite_C5()
+g_351 = nx.Graph()
+g_351.add_edges_from([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 5), (5, 6)])
 
-# graph1 = merge(star(0, [1, 2, 3, 4, 5]), path([6, 7, 8]))  # five star \sqcup two path
-
-# graceful_G= graceful(G)
-# sigmapm_G1 = sigmapm(graph1)
-# Glist7 = labeling_1_to_k(G,7)
-# Glist8 = labeling_1_to_k(G,8)
-firstC5 = labeling_1_to_k(c5[0], 7)
+labeled_g_351 = labeling_1_to_k(g_351, 7)
 
 # visualize(21, [graceful_G],  '123list', output_dir)
-visualize(21, firstC5, '123list', output_dir)
-# visualize(21, Glist7,  '123inflist',  output_dir)
-# visualize(21, Glist8,  '123inflist',  output_dir)
+visualize(21, labeled_g_351, '123list', output_dir)

@@ -177,7 +177,8 @@ def draw_boxes_and_charts(screen, all_graph_data, scale_factor):
         chart_start_y = start_y
         max_rows = 0
 
-        if len(distinct_lengths) > 4:  # simply sets the headers to each distinct length in chart if there are <= 4 distinct lengths
+        # simply sets the headers to each distinct length in chart if there are <= 4 distinct lengths
+        if len(distinct_lengths) > 4:
 
             headers = distinct_lengths  # sets headers of the chart next to the box; sets headers to distinct lengths
             max_rows = max(len(graph_data['l_mod_7_values'].get(key, [])) for key in headers)
@@ -188,7 +189,7 @@ def draw_boxes_and_charts(screen, all_graph_data, scale_factor):
                         (chart_start_x + chart_width // 2 - interval_text.get_width() // 2, chart_start_y))
             pygame.draw.line(screen, (0, 0, 0), (chart_start_x, chart_start_y + 30),
                              (chart_start_x + chart_width, chart_start_y + 30), 2)
-        else:  # else if
+        else:
             headers = distinct_lengths  # sets headers of the chart next to the box; sets headers to distinct lengths
 
             for i, header in enumerate(headers):
@@ -496,7 +497,7 @@ def visualize(mod, graphs, name, location="default"):
 
             for button in buttons:
                 color = (0, 128, 0) if button["state"] else (255, 0, 0)
-                text = f"{button['label']} {'on' if button["state"] else 'off'}"
+                text = f"{button['label']} {'on' if button['state'] else 'off'}"
                 button_font_size = 18
                 button_font = pygame.font.SysFont('Arial', button_font_size)
                 button_text = button_font.render(text, True, (0, 0, 0))
