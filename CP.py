@@ -68,56 +68,10 @@ def labeling_1_to_k(graph, r):
         for ell_star in range(m):
             target = ell * m + ell_star
             s.add(Or([p == target for p in all_pairs]))
-    '''
-    for i in range(k):
-        for v in graph.nodes():
-            s.add(label[i][v] >= 0, label[i][v] <= 2 * m + r - 1)
-
-        # Ensure unique labels within each copy
-        unique_labels = [label[i][v] for v in graph.nodes()]
-        s.add(Distinct(*unique_labels))  # Enforces no duplicate labels within the same copy
-
-    edge_list = list(graph.edges())
-    length = [{} for _ in range(k)]
-    length_star = [{} for _ in range(k)]
-
-    for i in range(k):
-        for (u, v) in edge_list:
-            len_var = Int(f'len_{i}_{u}_{v}')
-            s.add(len_var == Abs(label[i][u] - label[i][v]))
-            s.add(And(len_var >= 1, len_var <= k))
-            length[i][(u, v)] = len_var
-
-            len_star_var = Int(f'len_star_{i}_{u}_{v}')
-            q = Int(f'q_{i}_{u}_{v}')
-            s.add(len_star_var >= 0, len_star_var < m)
-            s.add(len_star_var == (label[i][u] + label[i][v]) - m * q)
-            s.add(q >= 0)
-            length_star[i][(u, v)] = len_star_var
-
-    # Enforce (ℓ, ℓ^*)-disjointness across copies
-    for i in range(k):
-        for j in range(i + 1, k):
-            for e1 in edge_list:
-                for e2 in edge_list:
-                    same_ell = (length[i][e1] == length[j][e2])
-                    same_ell_s = (length_star[i][e1] == length_star[j][e2])
-                    s.add(Not(And(same_ell, same_ell_s)))
-
-    # checking all pairs exist...
-    for ell in range(1, k + 1):
-        for ell_star in range(m):
-            pair_exists = []
-            for i in range(k):
-                for (u, v) in edge_list:
-                    pair_exists.append(And(length[i][(u, v)] == ell, length_star[i][(u, v)] == ell_star))
-            s.add(Or(*pair_exists))
-    '''
-
     # Solve
-    print("Solving...")
+    # print("Solving...")
     if s.check() == sat:
-        print("Solver found a solution.")
+        # print("Solver found a solution.")
         model = s.model()
         labeled_copies = []
         for i in range(k):
