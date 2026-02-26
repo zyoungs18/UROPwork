@@ -1,4 +1,4 @@
-from z3 import Solver, Int, sat, Distinct, Or
+from z3 import Solver, Int, sat, Distinct, Or, If, Abs, Sum
 import networkx as nx
 
 
@@ -68,10 +68,130 @@ def labeling_1_to_k(graph, r):
         for ell_star in range(m):
             target = ell * m + ell_star
             s.add(Or([p == target for p in all_pairs]))
-    # Solve
-    # print("Solving...")
+
+def labeling_1_rotational_lambda(graph, p):
+    m = graph.number_of_edges()
+    copies = (m + 1) // 2
+    max_label = p * m
+    INF = max_label  # encode infinity
+
+    s = Solver()
+
+    # label[i][v] = label of vertex v in copy i
+    label = {
+        i: {v: Int(f"label_{i}_{v}") for v in graph.nodes()}
+        for i in range(copies)
+    }
+
+    edge_labels = []
+
+    for i in range(copies):
+        # Injective per copy
+        s.add(Distinct([label[i][v] for v in graph.nodes()]))
+
+        for v in graph.nodes():
+            s.add(label[i][v] >= 0)
+            s.add(label[i][v] <= INF)
+
+        for (u, v) in graph.edges():
+            diff = Int(f"diff_{i}_{u}_{v}")
+            edge_labels.append(diff)
+
+            # |f(u) - f(v)| or ∞ behavior
+            s.add(
+                If(
+                    Or(label[i][u] == INF, label[i][v] == INF),
+                    diff == INF,
+                    diff == Abs(label[i][u] - label[i][v])
+                )
+            )
+
+    # Allowed labels
+    allowed = list(range(1, m // 2 + 1)) + [INF]
+
+    for d in edge_labels:
+        s.add(Or([d == a for a in allowed]))
+
+    # Exactly m edges per label
+    for a in allowed:
+        s.add(
+            Sum([If(d == a, 1, 0) for d in edge_labels]) == m
+        )
+
+    # Residue condition:
+    # No two edges with same label have same {f(u) mod m, f(v) mod m}
+    pair_hashes = {}
+
+    for i in range(copies):
+        for (u, v) in graph.edges():
+            d = Int(f"diff_{i}_{u}_{v}")
+
+            r1 = Int(f"r1_{i}_{u}_{v}")
+            r2 = Int(f"r2_{i}_{u}_{v}")
+
+            s.add(
+                If(label[i][u] == INF, r1 == INF, r1 == label[i][u] % m)
+            )
+            s.add(
+                If(label[i][v] == INF, r2 == INF, r2 == label[i][v] % m)
+            )
+
+            h = Int(f"hash_{i}_{u}_{v}")
+            s.add(h == r1 * (m + 1) + r2)
+
+            if d not in pair_hashes:
+                pair_hashes[d] = []
+
+            pair_hashes[d].append(h)
+
+    for d in allowed:
+        if d in pair_hashes:
+            s.add(Distinct(pair_hashes[d]))
+
+    print("Solving 1-rotational λ_p-labeling...")
     if s.check() == sat:
-        # print("Solver found a solution.")
+        print("Solution found.\n")
+        model = s.model()
+
+        labeled_copies = []
+
+        for i in range(copies):
+            print(f"Copy {i}:")
+
+            g_copy = graph.copy()
+            labels = {}
+
+            for v in graph.nodes():
+                val = model[label[i][v]].as_long()
+                if val == INF:
+                    labels[v] = "∞"
+                else:
+                    labels[v] = val
+
+                print(f"  Node {v} -> Label {labels[v]}")
+
+            nx.set_node_attributes(g_copy, labels, "label")
+            labeled_copies.append(g_copy)
+
+            print()
+
+        return labeled_copies
+
+    print("No solution.")
+    return None
+
+
+
+
+
+
+
+
+'''
+    # Solve
+    print("Solving...")
+    if s.check() == sat:
+        print("Solver found a solution.")
         model = s.model()
         labeled_copies = []
         for i in range(k):
@@ -89,3 +209,4 @@ def labeling_1_to_k(graph, r):
         return labeled_copies
     print("No solution found.")
     return None
+    '''

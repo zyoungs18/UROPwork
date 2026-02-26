@@ -2,7 +2,7 @@ import networkx as nx
 from itertools import combinations
 import os
 from CP import *
-# from graph_visualization import *
+from graph_visualization import *
 from itertools import combinations_with_replacement
 output_dir = os.path.dirname(os.path.abspath(__file__))  # PATH string this file is contained in
 
@@ -124,37 +124,9 @@ def trees(n):
     return all_trees
 
 
-def is_tripartite(graph):
-    if nx.is_bipartite(graph):
-        return False
-    return nx.chromatic_polynomial(graph)(3) > 0
-
-
-def generate_tripartite_c5():
-    base = nx.cycle_graph(5)
-    graphs = []
-
-    for u, v in combinations_with_replacement(base.nodes(), 2):
-        graph = base.copy()
-        a = max(graph.nodes()) + 1
-        b = a + 1
-
-        graph.add_edge(u, a)
-        graph.add_edge(v, b)
-
-        if not is_isomorphic_to_any(graph, graphs):
-            graphs.append(graph)
-    return graphs
-
-
 '''-----------------------------------------------------------------------------------'''
 
 current_graph = nx.Graph()
-current_graph.add_edges_from([(0, 1), (1, 2), (2, 0), (0, 3), (0, 4), (1, 5), (1, 6)])
+current_graph.add_edges_from([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 5), (5, 6)])
 
-print("Graph: g_316 (Nodes 0-2 are triangle, 3 and 4 off 0, 5 and 6 off 1)")
-labeled_graph = labeling_1_to_k(current_graph, 7)
-print("----")
-
-# visualize(21, [graceful_G],  '123list', output_dir)
-# visualize(21, labeled_g_351, '123list', output_dir)
+labeled_current_graph = labeling_1_rotational_lambda(current_graph, 3)
